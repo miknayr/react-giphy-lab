@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import Search from './Search'
 import Result from './Result'
+import axios from 'axios'
 
 const searchObj = {
   "data": [
@@ -53,26 +54,61 @@ class SearchContainer extends Component {
     }
   }
 
-  runSearch = (e) => {
-    const captSearch = e.target.value
-    const searchRunResults = searchObj.data.map((elem) => {
-      if (elem.source.includes(captSearch.toLowerCase())) {
-        return elem.images.fixed_height.url
+  search = () => {
+    axios.get('http://api.giphy.com/v1/gifs/search', {
+      params: {
+        api_key: apiKey,
+        q:this.state.searchValue
       }
     })
-    // console.log(searchRunResults)
-    // console.log(searchObj.data)
-
-    // console.log(captSearch)
-    this.setState({
-      searchValue: captSearch,
-      searchResult: searchRunResults
+    .then((res) => {
+      this.setState({
+        searchResult: res.data.data
+      })
     })
   }
+
+  shouldComponentUpdate = (nextProps, nextState) => {
+    if (this.state.searchResult.length === 0 && this.state.searchValue === nextState.searchValue) {
+      return false
+    }
+    return true
+  }
+  componentDidUpdate = (prevProps, prevState) => {
+    if (prevState.searchValue !== this.state.searchValue) {
+      this.search()
+    }
+  }
+
+  runSearch = (e) => {
+    const captSearch = e.target.value
+    this.setState({
+      searchValue: captSearch
+    })
+
+    //~~~~ this is previous search formula //  
+    // const searchRunResults = searchObj.data.map((elem) => {
+    //   if (elem.source.includes(captSearch.toLowerCase())) {
+    //     return elem.images.fixed_height.url
+    //   }
+    // })
+    // // console.log(searchRunResults)
+    // // console.log(searchObj.data)
+
+    // // console.log(captSearch)
+    // this.setState({
+    //   searchValue: captSearch,
+    //   searchResult: searchRunResults
+    // })
+  }
     render() {
-      const resultsToRender = this.state.searchResult.map((res) => {
-        return <Result imgSrc={res} />
-      })
+      let resultsToRender
+      if (this.state.searchResult) {
+        console.log(this.state.searchResult)
+        resultsToRender = this.state.searchResult.map((res) => {
+          return <Result imgSrc={res.images.fixed_height.url} />
+        })
+      }
         return (
             <div>
                 <Search searchValue={this.state.searchValue} runSearch={this.runSearch}/>
